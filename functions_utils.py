@@ -288,6 +288,47 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
 
 
 
+def get_cluster_descriptions(summary_df):
+    label_descriptions = {
+        # Attacking
+        "Elite Attack": "High shots, xG and goal output.",
+        "Clinical Finishers": "Score more than expected with fewer chances.",
+        "Wasteful Finishers": "High xG, low goals — poor finishing.",
+        "Low Threat Teams": "Few shots, low xG and goals.",
+        "Slight xG Over-Performance": "Efficient with slightly better than expected goals.",
+        "Slight xG Under-Performance": "Generate chances but struggle to convert.",
+        "Shot-Heavy, Low Conversion": "Take many shots but few goals.",
+        "Underwhelming Attackers": "Low in both volume and efficiency.",
+        "Steady but Unremarkable": "Average in volume and finishing.",
+        "Balanced Attackers": "Solid but not standout attacking profile.",
+
+        # Defensive
+        "Active, Conceed Little": "Concede little, active in defense.",
+        "Elite Protection": "Rarely tested and concede few goals.",
+        "Active, Conceed Many": "Face heavy pressure and concede often.",
+        "Passive & Leaky": "Low activity and concede heavily.",
+        "Busy Backline": "Active defense but still concede.",
+        "Passive but Effective": "Low action but decent goal prevention.",
+        "Active Defenders": "Involved frequently, varying success.",
+        "Average Defenders": "Mid-level across defensive metrics.",
+
+        # Possession & Passing
+        "Elite Possession Teams": "High possession, passing, and territory control.",
+        "Slow, Safe Possession": "Hold the ball but lack penetration.",
+        "Direct, Low-Possession": "Quick transitions with little buildup.",
+        "Territorial Without Penetration": "Attack territory but don't break lines.",
+        "Progressive but Direct": "Advance ball quickly without sustained possession.",
+        "Possession-Oriented": "Comfortable with ball and build-up.",
+        "Balanced Possession": "Average possession and progression.",
+        "Mixed Style Teams": "No clear stylistic identity.",
+    }
+
+    unique_labels = summary_df['Cluster Label'].unique()
+    filtered_descriptions = {label: desc for label, desc in label_descriptions.items() if label in unique_labels}
+
+    return filtered_descriptions
+
+
 def name_clusters(summary_df, feature_option=None):
     from scipy.stats import zscore
     import numpy as np
@@ -311,7 +352,7 @@ def name_clusters(summary_df, feature_option=None):
 
         def classify_team(g, x, s, so):
             if g >= gls_75 and x >= xg_75 and s >= sh_75:
-                return "High Volume & Productive"
+                return "Elite Attack"
             elif g >= gls_75 and x < xg_25:
                 return "Clinical Finishers"
             elif g < gls_25 and x >= xg_75:
@@ -320,9 +361,9 @@ def name_clusters(summary_df, feature_option=None):
                 return "Low Threat Teams"
             else:
                 if g > gls_median and x < xg_median:
-                    return "Decent Finishers"
+                    return "Slight xG Over-Performance"
                 elif x > xg_median and g < gls_median:
-                    return "xG Reliant Attackers"
+                    return "Slight xG Under-Performace"
                 elif s > sh_median and g < gls_median:
                     return "Shot-Heavy, Low Conversion"
                 elif g < gls_median and x < xg_median:
@@ -349,11 +390,11 @@ def name_clusters(summary_df, feature_option=None):
 
         def classify_defense(g, s, a):
             if g <= ga_25 and a >= actions_75:
-                return "Elite Defenders"
+                return "Active, Conceed Little"
             elif g <= ga_25 and s <= sota_median:
-                return "Well-Shielded Defense"
+                return "Elite Protection"
             elif g >= ga_75 and s >= sota_75:
-                return "Under Siege"
+                return "Active, Conceed Many"
             elif g >= ga_75 and a <= actions_25:
                 return "Passive & Leaky"
             elif a >= actions_75 and g >= ga_median:
@@ -403,47 +444,3 @@ def name_clusters(summary_df, feature_option=None):
         summary_df['Cluster Label'] = [f"Cluster {i}" for i in summary_df.index]
 
     return summary_df
-
-
-
-def get_cluster_descriptions(summary_df):
-    label_descriptions = {
-        # Attacking
-        "High Volume & Productive": "High shots, xG and goal output.",
-        "Clinical Finishers": "Score more than expected with fewer chances.",
-        "Wasteful Finishers": "High xG, low goals — poor finishing.",
-        "Low Threat Teams": "Few shots, low xG and goals.",
-        "Decent Finishers": "Efficient with slightly better than expected goals.",
-        "xG Reliant Attackers": "Generate chances but struggle to convert.",
-        "Shot-Heavy, Low Conversion": "Take many shots but few goals.",
-        "Underwhelming Attackers": "Low in both volume and efficiency.",
-        "Steady but Unremarkable": "Average in volume and finishing.",
-        "Balanced Attackers": "Solid but not standout attacking profile.",
-
-        # Defensive
-        "Elite Defenders": "Concede little, active in defense.",
-        "Well-Shielded Defense": "Rarely tested and concede few goals.",
-        "Under Siege": "Face heavy pressure and concede often.",
-        "Passive & Leaky": "Low activity and concede heavily.",
-        "Busy Backline": "Active defense but still concede.",
-        "Passive but Effective": "Low action but decent goal prevention.",
-        "Active Defenders": "Involved frequently, varying success.",
-        "Average Defenders": "Mid-level across defensive metrics.",
-
-        # Possession & Passing
-        "Elite Possession Teams": "High possession, passing, and territory control.",
-        "Slow, Safe Possession": "Hold the ball but lack penetration.",
-        "Direct, Low-Possession": "Quick transitions with little buildup.",
-        "Territorial Without Penetration": "Attack territory but don't break lines.",
-        "Progressive but Direct": "Advance ball quickly without sustained possession.",
-        "Possession-Oriented": "Comfortable with ball and build-up.",
-        "Balanced Possession": "Average possession and progression.",
-        "Mixed Style Teams": "No clear stylistic identity.",
-    }
-
-    unique_labels = summary_df['Cluster Label'].unique()
-    filtered_descriptions = {label: desc for label, desc in label_descriptions.items() if label in unique_labels}
-
-    return filtered_descriptions
-
-
