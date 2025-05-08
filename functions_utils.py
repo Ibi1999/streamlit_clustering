@@ -272,6 +272,7 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
     # Update layout
     fig.update_layout(
         title="3D Interactive Cluster Visualization",
+        margin=dict(l=10, r=10, t=40, b=10),
         scene=dict(
             xaxis=dict(showticklabels=False, showgrid=False),  # Hide ticks and gridlines
             yaxis=dict(showticklabels=False, showgrid=False),  # Hide ticks and gridlines
