@@ -50,7 +50,7 @@ def cluster_visual(df, k=3, feature_option=None, summary_df=None):
         cluster_name_map = {i: f"Cluster {i}" for i in range(k)}
 
     # Plotting
-    fig, ax = plt.subplots(figsize=(12, 6), dpi=150)
+    fig, ax = plt.subplots(figsize=(12, 9), dpi=150)
     fig.patch.set_facecolor('white')
     ax.set_facecolor('white')
 
@@ -268,22 +268,60 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
             hoverinfo='skip',
             showlegend=False
         ))
-
-    # Update layout
+        
     fig.update_layout(
-        title="3D Interactive Cluster Visualization",
+        title="Interactive Visualization",  # Title text
+        title_x=0,  # Position the title at the center horizontally
+        title_y=0.98,  # Position the title slightly below the top
+        title_font=dict(
+            size=18,  # Font size for the title
+            color='white',  # Font color for the title
+        ),
         margin=dict(l=10, r=10, t=40, b=10),
         scene=dict(
-            xaxis=dict(showticklabels=False, showgrid=False),  # Hide ticks and gridlines
-            yaxis=dict(showticklabels=False, showgrid=False),  # Hide ticks and gridlines
-            zaxis=dict(showticklabels=False, showgrid=False),  # Hide ticks and gridlines
-            bgcolor='#343541'
+            xaxis=dict(
+                showticklabels=False,
+                showgrid=False,
+                zeroline=False,  # Remove the zero line (axis line)
+                linecolor='rgba(255, 255, 255, 0.2)',  # Make the axis lines very faint
+                linewidth=0.5  # Set the border thickness around the plot
+            ),
+            yaxis=dict(
+                showticklabels=False,
+                showgrid=False,
+                zeroline=False,  # Remove the zero line (axis line)
+                linecolor='rgba(255, 255, 255, 0.2)',  # Make the axis lines very faint
+                linewidth=0.5  # Set the border thickness around the plot
+            ),
+            zaxis=dict(
+                showticklabels=False,
+                showgrid=False,
+                zeroline=False,  # Remove the zero line (axis line)
+                linecolor='rgba(255, 255, 255, 0.2)',  # Make the axis lines very faint
+                linewidth=0.5  # Set the border thickness around the plot
+            ),
+            bgcolor='#343541'  # Set the background color of the scene
         ),
-        paper_bgcolor='#1e1e1e',
+        paper_bgcolor='#1e1e1e',  # Set the paper background color
         font=dict(color='white'),
         width=1200,
-        height=600
+        height=800,
+        showlegend=False,  # Ensure the legend is visible
+        legend=dict(
+            x=1,  # Position the legend in the center horizontally
+            y=1.15,  # Position the legend slightly above the graph
+            orientation="h",  # Set horizontal orientation
+            font=dict(size=12, color='white'),
+            bgcolor='rgba(0,0,0,0)',  # Make legend background transparent
+            bordercolor='rgba(0,0,0,0)',  # Remove border color
+            borderwidth=0,  # Remove the border width around the legend
+            itemwidth=30,  # Optionally control the width of legend items
+            traceorder='normal',  # Ensure trace order remains consistent
+            itemsizing='constant'  # Ensure legend items are constant in size
+        )
     )
+
+
 
     return fig
 
