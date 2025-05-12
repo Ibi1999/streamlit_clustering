@@ -24,51 +24,56 @@ with st.sidebar:
             - A detailed output dataframe.
         """)
 
-    # Dropdown-style expander for cluster descriptions
+    # Cluster Descriptions moved back here
     with st.expander("📊 Cluster Descriptions", expanded=False):
-        st.markdown("### 🟥 Attacking Clusters")
-        attacking_labels = {
-            "Elite Attack": "High shots, xG and goal output.",
-            "Clinical Finishers": "Score more than expected with fewer chances.",
-            "Wasteful Finishers": "High xG, low goals — poor finishing.",
-            "Low Threat Teams": "Few shots, low xG and goals.",
-            "Slight xG Over-Performance": "Efficient with slightly better than expected goals.",
-            "Slight xG Under-Performance": "Generate chances but struggle to convert.",
-            "Shot-Heavy, Low Conversion": "Take many shots but few goals.",
-            "Underwhelming Attackers": "Low in both volume and efficiency.",
-            "Steady but Unremarkable": "Average in volume and finishing.",
-            "Balanced Attackers": "Solid but not standout attacking profile."
-        }
-        for label, desc in attacking_labels.items():
-            st.write(f"**{label}:** {desc}")
+        feature_option_sidebar = st.session_state.get("feature_option_sidebar", "Attacking")
 
-        st.markdown("### 🟦 Defensive Clusters")
-        defensive_labels = {
-            "Active, Conceed Little": "Concede little, active in defense.",
-            "Elite Protection": "Rarely tested and concede few goals.",
-            "Active, Conceed Many": "Face heavy pressure and concede often.",
-            "Passive & Leaky": "Low activity and concede heavily.",
-            "Busy Backline": "Active defense but still concede.",
-            "Passive but Effective": "Low action but decent goal prevention.",
-            "Active Defenders": "Involved frequently, varying success.",
-            "Average Defenders": "Mid-level across defensive metrics."
-        }
-        for label, desc in defensive_labels.items():
-            st.write(f"**{label}:** {desc}")
+        if feature_option_sidebar == "Attacking":
+            st.markdown("### 🟥 Attacking Clusters")
+            attacking_labels = {
+                "Elite Attack": "High shots, xG and goal output.",
+                "Clinical Finishers": "Score more than expected with fewer chances.",
+                "Wasteful Finishers": "High xG, low goals — poor finishing.",
+                "Low Threat Teams": "Few shots, low xG and goals.",
+                "Slight xG Over-Performance": "Efficient with slightly better than expected goals.",
+                "Slight xG Under-Performance": "Generate chances but struggle to convert.",
+                "Shot-Heavy, Low Conversion": "Take many shots but few goals.",
+                "Underwhelming Attackers": "Low in both volume and efficiency.",
+                "Steady but Unremarkable": "Average in volume and finishing.",
+                "Balanced Attackers": "Solid but not standout attacking profile."
+            }
+            for label, desc in attacking_labels.items():
+                st.write(f"**{label}:** {desc}")
 
-        st.markdown("### 🟩 Possession & Passing Clusters")
-        possession_labels = {
-            "Elite Possession Teams": "High possession, passing, and territory control.",
-            "Slow, Safe Possession": "Hold the ball but lack penetration.",
-            "Direct, Low-Possession": "Quick transitions with little buildup.",
-            "Territorial Without Penetration": "Attack territory but don't break lines.",
-            "Progressive but Direct": "Advance ball quickly without sustained possession.",
-            "Possession-Oriented": "Comfortable with ball and build-up.",
-            "Balanced Possession": "Average possession and progression.",
-            "Mixed Style Teams": "No clear stylistic identity."
-        }
-        for label, desc in possession_labels.items():
-            st.write(f"**{label}:** {desc}")
+        elif feature_option_sidebar == "Defensive":
+            st.markdown("### 🟦 Defensive Clusters")
+            defensive_labels = {
+                "Active, Conceed Little": "Concede little, active in defense.",
+                "Elite Protection": "Rarely tested and concede few goals.",
+                "Active, Conceed Many": "Face heavy pressure and concede often.",
+                "Passive & Leaky": "Low activity and concede heavily.",
+                "Busy Backline": "Active defense but still concede.",
+                "Passive but Effective": "Low action but decent goal prevention.",
+                "Active Defenders": "Involved frequently, varying success.",
+                "Average Defenders": "Mid-level across defensive metrics."
+            }
+            for label, desc in defensive_labels.items():
+                st.write(f"**{label}:** {desc}")
+
+        elif feature_option_sidebar == "Possession & Passing":
+            st.markdown("### 🟩 Possession & Passing Clusters")
+            possession_labels = {
+                "Elite Possession Teams": "High possession, passing, and territory control.",
+                "Slow, Safe Possession": "Hold the ball but lack penetration.",
+                "Direct, Low-Possession": "Quick transitions with little buildup.",
+                "Territorial Without Penetration": "Attack territory but don't break lines.",
+                "Progressive but Direct": "Advance ball quickly without sustained possession.",
+                "Possession-Oriented": "Comfortable with ball and build-up.",
+                "Balanced Possession": "Average possession and progression.",
+                "Mixed Style Teams": "No clear stylistic identity."
+            }
+            for label, desc in possession_labels.items():
+                st.write(f"**{label}:** {desc}")
 
 # --- Title ---
 st.title("Team Clustering")
@@ -81,6 +86,7 @@ with col2:
         "Select Feature Set for Clustering:",
         ("Attacking", "Defensive", "Possession & Passing")
     )
+    st.session_state["feature_option_sidebar"] = feature_option  # update for sidebar display
 
 with col3:
     k = st.slider("Select number of clusters (k):", 1, 10, 4)
