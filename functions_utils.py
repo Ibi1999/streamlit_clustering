@@ -111,6 +111,118 @@ def cluster_visual(df, k=3, feature_option=None, summary_df=None):
     return fig
 
 
+def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summary_df=None, pos=None, name=None):
+    df_clusterd = df.copy()
+
+    # Merge player names if available
+    if 'player_id' in df_clusterd.columns and player_names is not None:
+        df_clusterd = df_clusterd.merge(player_names[['player_id', 'player']], on='player_id', how='left')
+
+    # Filter by position
+    if pos is not None:
+        df_clusterd = df_clusterd[df_clusterd['pos'].str.contains(pos, case=False, na=False)]
+
+    # Select and scale numerical features
+    X = df_clusterd.select_dtypes(include='number')
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # KMeans clustering
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    clusters = kmeans.fit_predict(X_scaled)
+    df_clusterd['cluster'] = clusters
+
+    # PCA
+    pca = PCA(n_components=2)
+    X_pca = pca.fit_transform(X_scaled)
+    df_clusterd['PCA1'] = X_pca[:, 0]
+    df_clusterd['PCA2'] = X_pca[:, 1]
+
+    # Default: plot everything
+    df_clusterd['alpha'] = 1.0
+
+    # If player name is selected, hide others
+    if name is not None and 'player' in df_clusterd.columns:
+        matched_player = df_clusterd[df_clusterd['player'].str.lower() == name.lower()]
+        if not matched_player.empty:
+            target_cluster = matched_player.iloc[0]['cluster']
+            df_clusterd['alpha'] = df_clusterd['cluster'].apply(lambda c: 1.0 if c == target_cluster else 0.0)
+        else:
+            print(f"Player '{name}' not found in the data.")
+            return None
+
+    # Cluster labels
+    if summary_df is not None and 'cluster' in summary_df.columns:
+        cluster_name_map = summary_df.set_index('cluster')['Cluster Label'].to_dict()
+    else:
+        cluster_name_map = {i: f"Cluster {i}" for i in range(k)}
+
+    # Plot
+    fig, ax = plt.subplots(figsize=(12, 9), dpi=150)
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('white')
+
+    colors = plt.cm.Set1(np.linspace(0, 1, k))
+    color_map = {i: colors[i] for i in range(k)}
+
+    # Plot all points, some transparent
+    for cluster_id in range(k):
+        cluster_df = df_clusterd[df_clusterd['cluster'] == cluster_id]
+        ax.scatter(
+            cluster_df['PCA1'], cluster_df['PCA2'],
+            c=[color_map[cluster_id]] * len(cluster_df),
+            alpha=cluster_df['alpha'].values,
+            s=80, edgecolor='k', label=cluster_name_map.get(cluster_id, f"Cluster {cluster_id}")
+        )
+
+    # Player labels (only for visible ones)
+    visible_players = df_clusterd[df_clusterd['alpha'] > 0.0]
+    for _, row in visible_players.iterrows():
+        ax.text(
+            row['PCA1'], row['PCA2'], row['player'],
+            fontsize=8, color='black',
+            ha='center', va='center',
+            bbox=dict(facecolor='white', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')
+        )
+
+    # Ellipses (only for visible clusters)
+    for cluster_id in np.unique(df_clusterd[df_clusterd['alpha'] > 0.0]['cluster']):
+        cluster_points = df_clusterd[df_clusterd['cluster'] == cluster_id][['PCA1', 'PCA2']].values
+        center = cluster_points.mean(axis=0)
+        std_dev = cluster_points.std(axis=0)
+        ellipse = Ellipse(
+            xy=center,
+            width=std_dev[0] * 4,
+            height=std_dev[1] * 4,
+            edgecolor=color_map[cluster_id],
+            facecolor='none',
+            linewidth=2,
+            linestyle='--'
+        )
+        ax.add_patch(ellipse)
+
+    # Legend (only visible clusters)
+    visible_clusters = df_clusterd[df_clusterd['alpha'] > 0.0]['cluster'].unique()
+    handles = [
+        plt.Line2D([], [], marker='o', linestyle='', color=color_map[cid], label=cluster_name_map.get(cid, f"Cluster {cid}"))
+        for cid in visible_clusters
+    ]
+    legend = ax.legend(handles=handles, title='Clusters', loc='upper left', bbox_to_anchor=(1.05, 1), facecolor='white')
+    for text in legend.get_texts():
+        text.set_color("black")
+    legend.get_title().set_color("black")
+
+    ax.set_title('Player Clusters', fontsize=16, color='black')
+    ax.tick_params(colors='black')
+    ax.spines[:].set_color('black')
+    ax.grid(True, color='gray', alpha=0.3)
+    ax.set_xlabel("PCA 1", color='black')
+    ax.set_ylabel("PCA 2", color='black')
+
+    plt.tight_layout()
+    return fig
+
+
 
 def clusterd_dataframe(df, k=3, max_k=10, plot_elbow=True):
     df_clusterd = df.copy()
@@ -131,6 +243,42 @@ def clusterd_dataframe(df, k=3, max_k=10, plot_elbow=True):
 
     return df_clusterd
 
+
+def clusterd_player_dataframe(df, player_names=None, k=3, max_k=20, plot_elbow=True, pos=None, name=None):
+    df_clusterd = df.copy()
+
+    # Merge player names based on player_id
+    if 'player_id' in df_clusterd.columns and player_names is not None:
+        df_clusterd = df_clusterd.merge(player_names[['player_id', 'player']], on='player_id', how='left')
+    
+    # Filter based on 'pos' if provided
+    if pos is not None:
+        df_clusterd = df_clusterd[df_clusterd['pos'].str.contains(pos, case=False, na=False)]
+
+    # Select only numerical features for clustering
+    X = df_clusterd.select_dtypes(include='number')
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Apply k-means clustering
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    clusters = kmeans.fit_predict(X_scaled)
+    df_clusterd['cluster'] = clusters
+
+    # If player name is provided, find their cluster and filter only those players
+    if name is not None and 'player' in df_clusterd.columns:
+        # Match exact player name, case-insensitive
+        matched_player = df_clusterd[df_clusterd['player'].str.lower() == name.lower()]
+        if not matched_player.empty:
+            cluster_id = matched_player.iloc[0]['cluster']
+            df_clusterd = df_clusterd[df_clusterd['cluster'] == cluster_id]
+        else:
+            print(f"Player '{name}' not found in the data.")
+            return None
+
+    return df_clusterd
 
 
 def find_optimal_k(df, max_k=10, plot=True):
@@ -161,7 +309,6 @@ def find_optimal_k(df, max_k=10, plot=True):
         plt.show()
     
 
-
 def cluster_summerise(df, k=3, max_k=10, plot_elbow=True):
     df_clusterd = df.copy()
     squad_names = df_clusterd['squad'] if 'squad' in df_clusterd.columns else None
@@ -184,6 +331,53 @@ def cluster_summerise(df, k=3, max_k=10, plot_elbow=True):
 
     return cluster_summary
 
+
+def cluster_player_summerise(df, player_names=None, k=3, max_k=20, plot_elbow=True,pos=None, name=None):
+    df_clusterd = df.copy()
+
+    # Merge player names based on player_id
+    if 'player_id' in df_clusterd.columns and player_names is not None:
+        df_clusterd = df_clusterd.merge(player_names[['player_id', 'player']], on='player_id', how='left')
+    
+    player_labels = df_clusterd['player'] if 'player' in df_clusterd.columns else None
+
+        # Filter based on 'pos' if provided
+    if pos is not None:
+        df_clusterd = df_clusterd[df_clusterd['pos'].str.contains(pos, case=False, na=False)]
+    
+    # Select only numerical features for clustering
+    X = df_clusterd.select_dtypes(include='number')
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Apply k-means with specified k
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    clusters = kmeans.fit_predict(X_scaled)
+
+    df_clusterd['cluster'] = clusters
+
+        # If player name is provided, find their cluster and filter only those players
+    if name is not None and 'player' in df_clusterd.columns:
+        # Match exact player name, case-insensitive
+        matched_player = df_clusterd[df_clusterd['player'].str.lower() == name.lower()]
+        if not matched_player.empty:
+            cluster_id = matched_player.iloc[0]['cluster']
+            df_clusterd = df_clusterd[df_clusterd['cluster'] == cluster_id]
+        else:
+            print(f"Player '{name}' not found in the data.")
+            return None
+
+
+    # If player names are available, add them to the dataframe
+    if player_labels is not None:
+        df_clusterd['player'] = player_labels
+
+    # Show cluster summary (group by 'cluster' and calculate mean of numerical features)
+    cluster_summary = df_clusterd.groupby('cluster').mean(numeric_only=True)
+
+    return cluster_summary
 
 
 def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None):
@@ -325,6 +519,162 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
 
     return fig
 
+
+def cluster_player_visual_3d_interactive(df, player_names=None, k=3, feature_option=None, summary_df=None, pos=None, name=None):
+    df_clusterd = df.copy()
+
+    # Merge player names based on player_id
+    if 'player_id' in df_clusterd.columns and player_names is not None:
+        df_clusterd = df_clusterd.merge(player_names[['player_id', 'player']], on='player_id', how='left')
+
+    # Filter based on 'pos' if provided
+    if pos is not None:
+        df_clusterd = df_clusterd[df_clusterd['pos'].str.contains(pos, case=False, na=False)]
+
+    # Select only numerical features for clustering
+    X = df_clusterd.select_dtypes(include='number')
+
+    # Scale features
+    scaler = StandardScaler()
+    X_scaled = scaler.fit_transform(X)
+
+    # Apply KMeans clustering
+    kmeans = KMeans(n_clusters=k, random_state=42)
+    clusters = kmeans.fit_predict(X_scaled)
+    df_clusterd['cluster'] = clusters
+
+    # Use PCA for 3D projection
+    pca = PCA(n_components=3)
+    X_pca = pca.fit_transform(X_scaled)
+    df_clusterd[['PCA1', 'PCA2', 'PCA3']] = X_pca
+
+    # Determine which clusters/points to show based on player name
+    if name is not None and 'player' in df_clusterd.columns:
+        matched_player = df_clusterd[df_clusterd['player'].str.lower() == name.lower()]
+        if not matched_player.empty:
+            target_cluster = matched_player.iloc[0]['cluster']
+            df_clusterd['alpha'] = (df_clusterd['cluster'] == target_cluster).astype(float)
+        else:
+            print(f"Player '{name}' not found in the data.")
+            return None
+    else:
+        df_clusterd['alpha'] = 1.0  # Show all by default
+
+    # Label clusters (optional)
+    df_named = name_clusters(df_clusterd.copy(), feature_option=feature_option)
+
+    # Build cluster name map
+    if summary_df is not None:
+        if 'cluster' in summary_df.columns:
+            cluster_name_map = summary_df.set_index('cluster')['Cluster Label'].to_dict()
+        else:
+            cluster_name_map = summary_df['Cluster Label'].to_dict()
+    else:
+        cluster_name_map = {i: f"Cluster {i}" for i in range(k)}
+
+    # Color mapping for clusters
+    cmap = cm.get_cmap('Set1', k)
+    cluster_colors = [to_hex(cmap(i)) for i in range(k)]
+
+    # Create Plotly 3D figure
+    fig = go.Figure()
+
+    for cluster_id in np.unique(clusters):
+        cluster_df = df_clusterd[df_clusterd['cluster'] == cluster_id]
+        visible_df = cluster_df[cluster_df['alpha'] == 1.0]
+        hidden_df = cluster_df[cluster_df['alpha'] == 0.0]
+
+        # Visible points
+        if not visible_df.empty:
+            fig.add_trace(go.Scatter3d(
+                x=visible_df['PCA1'],
+                y=visible_df['PCA2'],
+                z=visible_df['PCA3'],
+                mode='markers+text',
+                marker=dict(
+                    size=6,
+                    color=cluster_colors[cluster_id],
+                    opacity=1.0,
+                    line=dict(width=1, color='black')
+                ),
+                text=visible_df['player'] if 'player' in visible_df.columns else None,
+                name=cluster_name_map.get(cluster_id, f"Cluster {cluster_id}"),
+                textposition="top center",
+                showlegend=True
+            ))
+
+        # Hidden (transparent) points to preserve layout
+        if not hidden_df.empty:
+            fig.add_trace(go.Scatter3d(
+                x=hidden_df['PCA1'],
+                y=hidden_df['PCA2'],
+                z=hidden_df['PCA3'],
+                mode='markers',
+                marker=dict(
+                    size=6,
+                    color=cluster_colors[cluster_id],
+                    opacity=0.0,
+                    line=dict(width=1, color='black')
+                ),
+                text=None,
+                name='',
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+
+        # Optional translucent sphere for visible clusters only
+        if not visible_df.empty:
+            points = visible_df[['PCA1', 'PCA2', 'PCA3']].values
+            centroid = points.mean(axis=0)
+            radius = np.linalg.norm(points - centroid, axis=1).mean()
+
+            u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
+            x_sphere = centroid[0] + radius * np.cos(u) * np.sin(v)
+            y_sphere = centroid[1] + radius * np.sin(u) * np.sin(v)
+            z_sphere = centroid[2] + radius * np.cos(v)
+
+            fig.add_trace(go.Surface(
+                x=x_sphere,
+                y=y_sphere,
+                z=z_sphere,
+                showscale=False,
+                opacity=0.1,
+                surfacecolor=np.ones_like(x_sphere),
+                colorscale=[[0, cluster_colors[cluster_id]], [1, cluster_colors[cluster_id]]],
+                hoverinfo='skip',
+                showlegend=False
+            ))
+
+    fig.update_layout(
+        title="Interactive Visualization",
+        title_x=0.5,
+        margin=dict(l=10, r=10, t=40, b=10),
+        scene=dict(
+            xaxis=dict(showticklabels=False, showgrid=False, zeroline=False, linecolor='rgba(255,255,255,0.2)', linewidth=0.5),
+            yaxis=dict(showticklabels=False, showgrid=False, zeroline=False, linecolor='rgba(255,255,255,0.2)', linewidth=0.5),
+            zaxis=dict(showticklabels=False, showgrid=False, zeroline=False, linecolor='rgba(255,255,255,0.2)', linewidth=0.5),
+            bgcolor='#343541'
+        ),
+        paper_bgcolor='#1e1e1e',
+        font=dict(color='white'),
+        width=1200,
+        height=800,
+        showlegend=False,
+        legend=dict(
+            x=1,
+            y=1.15,
+            orientation="h",
+            font=dict(size=12, color='white'),
+            bgcolor='rgba(0,0,0,0)',
+            bordercolor='rgba(0,0,0,0)',
+            borderwidth=0,
+            itemwidth=30,
+            traceorder='normal',
+            itemsizing='constant'
+        )
+    )
+
+    return fig
 
 
 def get_cluster_descriptions(summary_df):
