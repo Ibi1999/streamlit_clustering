@@ -8,6 +8,7 @@ st.set_page_config(layout="wide")
 
 # --- Sidebar ---
 with st.sidebar:
+    st.markdown("<small>Created by Ibrahim Oksuzoglu</small>", unsafe_allow_html=True)
     st.title("🤖 Machine learning")
     clustering_type = st.selectbox("Select Clustering Type:", ("Team Clustering", "Player Clustering"))
 
