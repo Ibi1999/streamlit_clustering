@@ -278,7 +278,7 @@ def clusterd_player_dataframe(df, player_names=None, k=3, max_k=20, plot_elbow=T
             print(f"Player '{name}' not found in the data.")
             return None
 
-    return df_clusterd
+    return df_clusterd.drop(columns=['player_y'])
 
 
 def find_optimal_k(df, max_k=10, plot=True):
