@@ -18,7 +18,13 @@ from collections import defaultdict
 from matplotlib.lines import Line2D
 
 def cluster_visual(df, k=3, feature_option=None, summary_df=None):
-    
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+    from sklearn.cluster import KMeans
+    import numpy as np
+
     df_clusterd = df.copy()
     squad_names = df_clusterd['squad'] if 'squad' in df_clusterd.columns else None
     X = df_clusterd.select_dtypes(include='number')
@@ -43,20 +49,18 @@ def cluster_visual(df, k=3, feature_option=None, summary_df=None):
         if 'cluster' in summary_df.columns:
             cluster_name_map = summary_df.set_index('cluster')['Cluster Label'].to_dict()
         else:
-            # Assume index is the cluster number
             cluster_name_map = summary_df['Cluster Label'].to_dict()
     else:
-        # Fallback: generic labels
         cluster_name_map = {i: f"Cluster {i}" for i in range(k)}
 
     # Plotting
     fig, ax = plt.subplots(figsize=(12, 9), dpi=150)
-    fig.patch.set_facecolor('white')
-    ax.set_facecolor('white')
+    fig.patch.set_facecolor('#262730')  # Dark background
+    ax.set_facecolor('#262730')
 
     scatter = ax.scatter(
         X_pca[:, 0], X_pca[:, 1],
-        c=clusters, cmap='Set1', s=80, edgecolor='k'
+        c=clusters, cmap='Set1', s=80, edgecolor='white'
     )
 
     # Add team names
@@ -64,9 +68,9 @@ def cluster_visual(df, k=3, feature_option=None, summary_df=None):
         for i, name in enumerate(squad_names):
             ax.text(
                 X_pca[i, 0], X_pca[i, 1], name,
-                fontsize=8, color='black',
+                fontsize=8, color='white',
                 ha='center', va='center',
-                bbox=dict(facecolor='white', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')
+                bbox=dict(facecolor='#262730', alpha=0.8, edgecolor='white', boxstyle='round,pad=0.2')
             )
 
     # Ellipses around clusters
@@ -95,23 +99,32 @@ def cluster_visual(df, k=3, feature_option=None, summary_df=None):
         for i in unique_clusters
     ]
 
-    legend = ax.legend(handles=handles, title='Clusters', loc='upper left', bbox_to_anchor=(1.05, 1), facecolor='white')
+    legend = ax.legend(handles=handles, title='Clusters', loc='upper left', bbox_to_anchor=(1.05, 1),
+                       facecolor='#262730', edgecolor='white')
     for text in legend.get_texts():
-        text.set_color("black")
-    legend.get_title().set_color("black")
+        text.set_color("white")
+    legend.get_title().set_color("white")
 
-    ax.set_title('Team Clusters', fontsize=16, color='black')
-    ax.tick_params(colors='black')
-    ax.spines[:].set_color('black')
+    ax.set_title('Team Clusters', fontsize=16, color='white')
+    ax.tick_params(colors='white')
+    ax.spines[:].set_color('white')
     ax.grid(True, color='gray', alpha=0.3)
-    ax.set_xlabel("PCA 1", color='black')
-    ax.set_ylabel("PCA 2", color='black')
+    ax.set_xlabel("PCA 1", color='white')
+    ax.set_ylabel("PCA 2", color='white')
 
     plt.tight_layout()
     return fig
 
 
+
 def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summary_df=None, pos=None, name=None):
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Ellipse
+    from sklearn.preprocessing import StandardScaler
+    from sklearn.decomposition import PCA
+    from sklearn.cluster import KMeans
+    import numpy as np
+
     df_clusterd = df.copy()
 
     # Merge player names if available
@@ -159,8 +172,8 @@ def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summa
 
     # Plot
     fig, ax = plt.subplots(figsize=(12, 9), dpi=150)
-    fig.patch.set_facecolor('white')
-    ax.set_facecolor('white')
+    fig.patch.set_facecolor('#262730')  # Dark background
+    ax.set_facecolor('#262730')
 
     colors = plt.cm.Set1(np.linspace(0, 1, k))
     color_map = {i: colors[i] for i in range(k)}
@@ -172,7 +185,8 @@ def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summa
             cluster_df['PCA1'], cluster_df['PCA2'],
             c=[color_map[cluster_id]] * len(cluster_df),
             alpha=cluster_df['alpha'].values,
-            s=80, edgecolor='k', label=cluster_name_map.get(cluster_id, f"Cluster {cluster_id}")
+            s=80, edgecolor='white',
+            label=cluster_name_map.get(cluster_id, f"Cluster {cluster_id}")
         )
 
     # Player labels (only for visible ones)
@@ -180,9 +194,9 @@ def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summa
     for _, row in visible_players.iterrows():
         ax.text(
             row['PCA1'], row['PCA2'], row['player'],
-            fontsize=8, color='black',
+            fontsize=8, color='white',
             ha='center', va='center',
-            bbox=dict(facecolor='white', alpha=0.6, edgecolor='none', boxstyle='round,pad=0.2')
+            bbox=dict(facecolor='#262730', alpha=0.8, edgecolor='white', boxstyle='round,pad=0.2')
         )
 
     # Ellipses (only for visible clusters)
@@ -207,20 +221,22 @@ def cluster_player_visual(df, player_names=None, k=3, feature_option=None, summa
         plt.Line2D([], [], marker='o', linestyle='', color=color_map[cid], label=cluster_name_map.get(cid, f"Cluster {cid}"))
         for cid in visible_clusters
     ]
-    legend = ax.legend(handles=handles, title='Clusters', loc='upper left', bbox_to_anchor=(1.05, 1), facecolor='white')
+    legend = ax.legend(handles=handles, title='Clusters', loc='upper left', bbox_to_anchor=(1.05, 1),
+                       facecolor='#262730', edgecolor='white')
     for text in legend.get_texts():
-        text.set_color("black")
-    legend.get_title().set_color("black")
+        text.set_color("white")
+    legend.get_title().set_color("white")
 
-    ax.set_title('Player Clusters', fontsize=16, color='black')
-    ax.tick_params(colors='black')
-    ax.spines[:].set_color('black')
+    ax.set_title('Player Clusters', fontsize=16, color='white')
+    ax.tick_params(colors='white')
+    ax.spines[:].set_color('white')
     ax.grid(True, color='gray', alpha=0.3)
-    ax.set_xlabel("PCA 1", color='black')
-    ax.set_ylabel("PCA 2", color='black')
+    ax.set_xlabel("PCA 1", color='white')
+    ax.set_ylabel("PCA 2", color='white')
 
     plt.tight_layout()
     return fig
+
 
 
 
