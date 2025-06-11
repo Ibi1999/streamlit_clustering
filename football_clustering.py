@@ -9,12 +9,12 @@ st.set_page_config(layout="wide")
 # --- Sidebar ---
 with st.sidebar:
         # Load and display logo in the top-left
-    from PIL import Image
-    logo = Image.open("logo.png")
+    # from PIL import Image
+    # logo = Image.open("logo.png")
 
-    col1, col2 = st.columns([1, 6])
-    with col1:
-        st.image(logo, width=80)  # Adjust width as needed
+    # col1, col2 = st.columns([1, 6])
+    # with col1:
+    #     st.image(logo, width=80)  # Adjust width as needed
     st.markdown("<small>Created by Ibrahim Oksuzoglu</small>", unsafe_allow_html=True)
     st.title("🤖 Machine learning")
     clustering_type = st.selectbox("Select Clustering Type:", ("Team Clustering", "Player Clustering"))
