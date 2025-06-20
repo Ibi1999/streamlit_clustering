@@ -4,7 +4,8 @@ from functions_utils import *
 import plotly.express as px
 from scipy.stats import zscore
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",
+                   initial_sidebar_state="expanded")
 
 # --- Sidebar ---
 with st.sidebar:
