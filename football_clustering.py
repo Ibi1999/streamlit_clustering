@@ -4,17 +4,24 @@ from functions_utils import *
 import plotly.express as px
 from scipy.stats import zscore
 
-st.set_page_config(layout="wide",
-                   initial_sidebar_state="expanded")
+st.set_page_config(layout="wide")
 
 # --- Sidebar ---
 with st.sidebar:
-    # Load and display logo in the top-left
+        # Load and display logo in the top-left
     from PIL import Image
     logo = Image.open("logo.png")
+    def section_title(title):
+        st.markdown(f"""
+            <h3 style="display: flex; align-items: center; text-align: center; font-size: 36px;">
+                <span style="flex: 1; height: 3px; background: #ccc;"></span>
+                <span style="padding: 0 10px;">{title}</span>
+                <span style="flex: 1; height: 3px; background: #ccc;"></span>
+            </h3>
+        """, unsafe_allow_html=True)
+
     st.image(logo, width=80)  # Adjust width as needed
     st.markdown("<small>Created by Ibrahim Oksuzoglu</small>", unsafe_allow_html=True)
-    st.title("🤖 Machine learning")
     clustering_type = st.selectbox("Select Clustering Type:", ("Team Clustering", "Player Clustering"))
 
     with st.expander("🤔 What this app does", expanded=False): 
@@ -26,7 +33,7 @@ with st.sidebar:
         """)
 
 
-    with st.expander("ℹ️ How to use", expanded=True):
+    with st.expander("ℹ️ How to use", expanded=False):
         if clustering_type == "Team Clustering":
             st.markdown("""
             ### How to use this app:
@@ -105,7 +112,7 @@ with st.sidebar:
 
 # --- TEAM CLUSTERING ---
 if clustering_type == "Team Clustering":
-    st.title("🧩 Football Team Clustering")
+    section_title("🧩 Football Team Clustering")
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
@@ -160,27 +167,33 @@ if clustering_type == "Team Clustering":
         })
 
     if "summary_df" in st.session_state:
-        st.markdown("---")
         st.success(f"Clustering Teams based on **{feature_option}** features")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.subheader("2D Cluster model")
-            st.pyplot(st.session_state["fig2d"], use_container_width=True)
-        with col2:
-            st.subheader("3D Cluster model")
-            st.plotly_chart(st.session_state["fig3d"], use_container_width=True)
+        section_title("📊 Team Cluster Visualisations")
+        
+        col1, col2 = st.columns([4,2])
 
-        st.markdown("---")
-        st.subheader("🧮 Cluster Summary")
+        with col1:
+            tab1, tab2 = st.tabs(["📊 3D Cluster Visual","📉 2D Cluster Visual"])
+
+            with tab2:
+                st.pyplot(st.session_state["fig2d"], use_container_width=True)
+
+            with tab1:
+                st.plotly_chart(st.session_state["fig3d"], use_container_width=True)
+        with col2:
+            pass
+
+
+        section_title("🧮 Cluster Summary")
         st.dataframe(st.session_state["summary_df"])
 
-        st.markdown("---")
-        st.subheader("📋 Model Output")
+
+        section_title("📋 Model Output")
         st.dataframe(st.session_state["dataframe_output"])
 
 # --- PLAYER CLUSTERING ---
 else:
-    st.title("👤 Football Player Clustering")
+    section_title("👤 Football Player Clustering")
 
     @st.cache_data
     def load_player_info(competition):
@@ -255,7 +268,8 @@ else:
         show_all_clusters = st.checkbox("Show all clusters (Experimental)", value=False)
 
     if run_clustering:
-        st.markdown("### 📊 Player Cluster Visualisations")
+        section_title("📊 Player Cluster Visualisations")
+
 
         fig_2d = cluster_player_visual(
             df=player_df,
@@ -276,16 +290,21 @@ else:
 
             st.success(f"Showing players similar to **{selected_player}** at **{selected_position}**.")
 
-            col1, col2 = st.columns(2)
-            with col1:
-                st.subheader("2D Cluster model")
-                st.pyplot(fig_2d)
-            with col2:
-                st.subheader("3D Cluster model")
-                st.plotly_chart(fig_3d, use_container_width=True)
+            col1, col2 = st.columns([4,2])
 
-            st.markdown("---")
-            st.subheader("🧮 Cluster Summary")
+            with col1:
+
+                tab2, tab1 = st.tabs(["📊 3D Cluster Model","📉 2D Cluster Model"])
+
+                with tab1:
+                    st.pyplot(fig_2d)
+
+                with tab2:
+                    st.plotly_chart(fig_3d, use_container_width=True)
+            with col2:
+                pass
+
+            section_title("🧮 Cluster Summary")
             summary = cluster_player_summerise(
                 player_df, 
                 player_names=player_info_df, 
@@ -296,8 +315,7 @@ else:
             if summary is not None and not summary.empty:
                 st.dataframe(summary.style.format(precision=2), use_container_width=True)
 
-            st.markdown("---")
-            st.subheader("📋 Model Output")
+            section_title("📋 Model Output")
             output = clusterd_player_dataframe(
                 player_df, 
                 player_names=player_info_df, 

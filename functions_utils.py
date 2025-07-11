@@ -478,10 +478,10 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
             hoverinfo='skip',
             showlegend=False
         ))
-        
-    fig.update_layout(
+
+        fig.update_layout(
         title="Interactive Visualization",  # Title text
-        title_x=0,  # Position the title at the center horizontally
+        title_x=0,  # Position the title at the left horizontally (0 = left)
         title_y=0.98,  # Position the title slightly below the top
         title_font=dict(
             size=18,  # Font size for the title
@@ -514,8 +514,9 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
         ),
         paper_bgcolor='#1e1e1e',  # Set the paper background color
         font=dict(color='white'),
-        width=1200,
-        height=800,
+        width=1200,   # fixed width in pixels
+        height=900,  # fixed height in pixels (4:3 aspect ratio)
+        autosize=False,
         showlegend=False,  # Ensure the legend is visible
         legend=dict(
             x=1,  # Position the legend in the center horizontally
@@ -530,6 +531,7 @@ def cluster_visual_3d_interactive(df, k=3, feature_option=None, summary_df=None)
             itemsizing='constant'  # Ensure legend items are constant in size
         )
     )
+
 
 
 
@@ -674,7 +676,7 @@ def cluster_player_visual_3d_interactive(df, player_names=None, k=3, feature_opt
         paper_bgcolor='#1e1e1e',
         font=dict(color='white'),
         width=1200,
-        height=800,
+        height=900,
         showlegend=False,
         legend=dict(
             x=1,
